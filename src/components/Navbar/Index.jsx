@@ -39,7 +39,7 @@ const Index = () => {
               <MenuItem component={Link} to="/" onClick={handleMenuClose}>Inicio</MenuItem>
               <MenuItem component={Link} to="/album" onClick={handleMenuClose}>Álbum</MenuItem>
               <MenuItem component={Link} to="/my-photos" onClick={handleMenuClose}>Mis Fotos</MenuItem>
-              <MenuItem component={Link} to="/camera" onClick={handleMenuClose}>Cámara</MenuItem>
+              {/* <MenuItem component={Link} to="/camera" onClick={handleMenuClose}>Cámara</MenuItem> */}
               <MenuItem component={Link} to="/logout" onClick={handleMenuClose}>Cerrar Sesión</MenuItem>
             </Menu>
           </>
@@ -51,7 +51,7 @@ const Index = () => {
             <Button color="inherit" component={Link} to="/">Inicio</Button>
             <Button color="inherit" component={Link} to="/album">Álbum</Button>
             <Button color="inherit" component={Link} to="/my-photos">Mis Fotos</Button>
-            <Button color="inherit" component={Link} to="/camera">Camara</Button>
+            {/* <Button color="inherit" component={Link} to="/camera">Camara</Button> */}
             <Button color="inherit" component={Link} to="/logout">Cerrar Sesión</Button>
           </>
         )}

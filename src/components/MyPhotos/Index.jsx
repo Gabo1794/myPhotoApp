@@ -5,6 +5,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { ref, uploadBytes, getDownloadURL, listAll, deleteObject } from "firebase/storage";
 import { storage } from "../../config/firebase"; 
 import { v4 as uuidv4 } from 'uuid';
+import { CameraAltRounded } from '@mui/icons-material';
 
 const MAX_IMAGES = 20;
 
@@ -35,6 +36,12 @@ const Index = ({ albumId }) => {
     }
   }, [albumId, guestId]);
 
+  useEffect(() => {
+    if(imageUpload) {
+      handleImageUpload();
+    }
+  }, [imageUpload])
+
   
   const handleImageUpload = async () => {
     if (imageUpload == null || images.length >= MAX_IMAGES) return;
@@ -49,7 +56,8 @@ const Index = ({ albumId }) => {
 
   
   const handleDeleteImage = async (imageUrl) => {
-    const imageRef = ref(storage, `${albumId}/${imageUrl.split('/').pop().split('?')[0]}`);
+    const decodeUrl = decodeURIComponent(imageUrl.split('/').pop().split('?')[0]);
+    const imageRef = ref(storage, `${decodeUrl}`);
 
     await deleteObject(imageRef);
     setImages((prev) => prev.filter((img) => img !== imageUrl));
@@ -97,22 +105,34 @@ const Index = ({ albumId }) => {
           component="label"
           startIcon={<UploadIcon />}
           disabled={images.length >= MAX_IMAGES}
+          size='small'
+          style={{marginRight: 10}}
         >
           Subir Foto
           <input
             type="file"
             hidden
+            accept="image/*,video/*" 
             onChange={(e) => setImageUpload(e.target.files[0])}
           />
         </Button>
+
         <Button
           variant="contained"
-          sx={{ ml: 2 }}
-          onClick={handleImageUpload}
-          disabled={!imageUpload || images.length >= MAX_IMAGES}
+          component="label"
+          startIcon={<CameraAltRounded />}
+          disabled={images.length >= MAX_IMAGES}
+          size='small'
         >
-          Cargar
-        </Button>
+          Tomar foto
+          <input
+            type="file"
+            hidden
+            accept="image/*,video/*" 
+            capture="environment" 
+            onChange={(e) => setImageUpload(e.target.files[0])}
+          />
+        </Button>        
       </Box>
     </Box>
   );

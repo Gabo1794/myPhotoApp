@@ -92,13 +92,13 @@ const Index = () => {
                 >
                   Mis Fotos
                 </MenuItem>
-                <MenuItem
+                {/* <MenuItem
                   component={Link}
                   to={`/camera/${aid}`}
                   onClick={handleMenuClose}
                 >
                   Cámara
-                </MenuItem>
+                </MenuItem> */}
                 {/* <MenuItem component={Link} to="/logout" onClick={handleMenuClose}>
                 Cerrar Sesión
               </MenuItem> */}
@@ -123,9 +123,9 @@ const Index = () => {
               >
                 Mis Fotos
               </Button>
-              <Button color="inherit" component={Link} to={`/camera/${aid}`}>
+              {/* <Button color="inherit" component={Link} to={`/camera/${aid}`}>
                 Camara
-              </Button>
+              </Button> */}
               {/* <Button color="inherit" component={Link} to="/logout">
               Cerrar Sesión
             </Button> */}
