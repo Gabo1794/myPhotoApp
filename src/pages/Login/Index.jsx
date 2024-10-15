@@ -11,28 +11,27 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { useNavigate } from 'react-router-dom';
 
 import { SignInWithEmailAndPassword } from '../../services/auth/authService';
 
 const theme = createTheme();
 
 const Index = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    // Aquí iría la lógica para manejar el login, posiblemente utilizando Firebase Auth.
-    console.log('Email:', email);
-    console.log('Password:', password);
-
+    
     const response = await SignInWithEmailAndPassword(email, password);
 
     if (response && response.operationType !== "signIn") {
       return;
     }
 
-    console.log("login", response)
+    navigate("/");
 
   };
 

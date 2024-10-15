@@ -37,8 +37,6 @@ function App() {
       <Route element={<AppLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/album" element={<Album />} />
-        {/* <Route path="/my-photos" element={<MyPhotos />} /> */}
-        {/* <Route path="/camera" element={<Camera />} /> */}
         <Route path="/logout" element={<Navigate to="/login" replace />} />
       </Route>
       
