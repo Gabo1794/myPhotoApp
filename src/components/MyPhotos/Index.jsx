@@ -26,6 +26,7 @@ import {
   Close,
 } from "@mui/icons-material";
 import Webcam from "react-webcam";
+import Gallery from "../Gallery/Index";
 
 const MAX_IMAGES = 20;
 
@@ -125,14 +126,13 @@ const Index = ({ albumId }) => {
         Mis Fotos ({images.length}/{MAX_IMAGES})
       </Typography>
 
-      {/* Mostrar un mensaje si el usuario ha alcanzado el límite de fotos */}
       {images.length >= MAX_IMAGES && (
         <Typography color="error" sx={{ mt: 2 }}>
           Has alcanzado el límite máximo de fotos (20).
         </Typography>
       )}
 
-      <Box sx={{ mt: 4, textAlign: "center" }}>
+      <Box sx={{ mt: 4, textAlign: "center", mb: 4 }}>
         <Button
           variant="contained"
           component="label"
@@ -176,7 +176,6 @@ const Index = ({ albumId }) => {
               zIndex: 1000,
             }}
           >
-            {/* Cámara */}
             <Webcam
               audio={false}
               ref={webcamRef}
@@ -185,7 +184,6 @@ const Index = ({ albumId }) => {
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
 
-            {/* Botón de captura */}
             <Box
               sx={{
                 position: "absolute",
@@ -254,42 +252,11 @@ const Index = ({ albumId }) => {
         )}
       </Box>
 
-      <Grid container spacing={2} justifyContent="center">
-        {images.map((url, index) => (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
-            <Card>
-              <CardMedia
-                component="img"
-                alt={`image-${index}`}
-                height="200"
-                image={url}
-              />
-              <CardContent>
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="center"
-                >
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    component="p"
-                  >
-                    Foto {index + 1}
-                  </Typography>
-                  <IconButton
-                    onClick={() => handleDeleteImage(url)}
-                    aria-label="delete"
-                    sx={{ color: "error.main" }}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+      <Gallery 
+        images={images} 
+        handleDeleteImage={handleDeleteImage} 
+      />
+
     </Box>
   );
 };
