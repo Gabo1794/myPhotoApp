@@ -6,7 +6,8 @@ import {
 import {
   ref,
   getDownloadURL,
-  listAll
+  listAll,
+  getMetadata
 } from "firebase/storage";
 import { doc, getDoc } from "firebase/firestore";
 import { storage, db } from "../../../config/firebase";
@@ -50,10 +51,21 @@ const Index = () => {
       setLoading(true);
       const imagesRef = ref(storage, `${aid}/`);
       const imageList = await listAll(imagesRef);
-      const urls = await Promise.all(
-        imageList.items.map((item) => getDownloadURL(item))
+
+      const mediaData = await Promise.all(
+        imageList.items
+          .map(async (item) => {
+            const url = await getDownloadURL(item);
+            const metadata = await getMetadata(item);
+            return {
+              url,
+              contentType: metadata.contentType,
+            };
+          })
       );
-      setImages(urls);
+        
+
+      setImages(mediaData);
       setLoading(false);
     };
 

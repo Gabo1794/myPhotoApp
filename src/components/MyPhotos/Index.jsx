@@ -1,22 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Grid2 as Grid,
-  Card,
-  CardMedia,
-  CardContent,
   Typography,
   IconButton,
   Button,
   Box,
 } from "@mui/material";
 import UploadIcon from "@mui/icons-material/Upload";
-import DeleteIcon from "@mui/icons-material/Delete";
 import {
   ref,
   uploadBytes,
   getDownloadURL,
   listAll,
   deleteObject,
+  getMetadata
 } from "firebase/storage";
 import { storage } from "../../config/firebase";
 import { v4 as uuidv4 } from "uuid";
@@ -46,19 +42,28 @@ const Index = ({ albumId }) => {
       setLoading(true);
       const imagesRef = ref(storage, `${albumId}/`);
       const imageList = await listAll(imagesRef);
-
-      const urls = await Promise.all(
+  
+      const mediaData = await Promise.all(
         imageList.items
           .filter((item) => item.name.includes(guestId))
-          .map((item) => getDownloadURL(item))
+          .map(async (item) => {
+            const url = await getDownloadURL(item);
+            const metadata = await getMetadata(item);
+            return {
+              url,
+              contentType: metadata.contentType,
+            };
+          })
       );
-      setImages(urls);
+  
+      setImages(mediaData);
       setLoading(false);
     };
+  
     if (guestId) {
       fetchImages();
     }
-  }, [albumId, guestId]);
+  }, [albumId, guestId]);  
 
   useEffect(() => {
     if (imageUpload) {
@@ -83,8 +88,9 @@ const Index = ({ albumId }) => {
     const imageRef = ref(storage, `${albumId}/${guestId}-${uuidv4()}`);
     await uploadBytes(imageRef, imageUpload);
     const url = await getDownloadURL(imageRef);
+    const metadata = await getMetadata(imageRef);
 
-    setImages((prev) => [...prev, url]);
+    setImages((prev) => [...prev, { url, contentType: metadata.contentType }]);
     setImageUpload(null);
   };
 
@@ -95,7 +101,7 @@ const Index = ({ albumId }) => {
     const imageRef = ref(storage, `${decodeUrl}`);
 
     await deleteObject(imageRef);
-    setImages((prev) => prev.filter((img) => img !== imageUrl));
+    setImages((prev) => prev.filter((media) => media.url !== imageUrl));
   };
 
   const captureImage = () => {

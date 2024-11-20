@@ -18,8 +18,8 @@ const Index = ({ images, handleDeleteImage }) => {
   const [open, setOpen] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(null);
 
-  const handleOpen = (url) => {
-    setSelectedMedia(url);
+  const handleOpen = (media) => {
+    setSelectedMedia(media);
     setOpen(true);
   };
 
@@ -31,17 +31,35 @@ const Index = ({ images, handleDeleteImage }) => {
   return (
     <>
       <Grid container spacing={2} justifyContent="center">
-        {images.map((url, index) => (
+        {images.map((media, index) => (
           <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
             <Card>
-              <CardMedia
-                component="img"
-                alt={`image-${index}`}
-                height="200"
-                image={url}
-                onClick={() => handleOpen(url)}
-                sx={{ cursor: "pointer", objectFit: "cover" }}
-              />
+              {media.contentType.startsWith("video/") ? (
+                <Box
+                  component="video"
+                  src={media.url}
+                  controls
+                  preload="auto"
+                  playsInline
+                  height="200"
+                  sx={{
+                    cursor: "pointer",
+                    objectFit: "cover",
+                    width: "100%",
+                  }}
+                >
+                  Tu navegador no soporta la etiqueta de video.
+                </Box>
+              ) : (
+                <CardMedia
+                  component="img"
+                  alt={`image-${index}`}
+                  height="200"
+                  image={media.url}
+                  onClick={() => handleOpen(media)}
+                  sx={{ cursor: "pointer", objectFit: "cover" }}
+                />
+              )}
               <CardContent>
                 <Box
                   display="flex"
@@ -53,17 +71,17 @@ const Index = ({ images, handleDeleteImage }) => {
                     color="textSecondary"
                     component="p"
                   >
-                    Foto {index + 1}
+                    Recuerdo {index + 1}
                   </Typography>
                   {handleDeleteImage && (
-                    <IconButton
-                      onClick={() => handleDeleteImage(url)}
-                      aria-label="delete"
-                      sx={{ color: "error.main" }}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  )}
+                  <IconButton
+                    onClick={() => handleDeleteImage(media.url)}
+                    aria-label="delete"
+                    sx={{ color: "error.main" }}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                   )}
                 </Box>
               </CardContent>
             </Card>
@@ -84,19 +102,15 @@ const Index = ({ images, handleDeleteImage }) => {
           <Box
             sx={{
               position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              bgcolor: "background.paper",
-              boxShadow: 24,
-              p: 2,
-              maxWidth: "90vw",
-              maxHeight: "90vh",
-              outline: "none",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+              bgcolor: "background.default",
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              borderRadius:2
+              overflow: "hidden",
             }}
           >
             <IconButton
@@ -114,25 +128,17 @@ const Index = ({ images, handleDeleteImage }) => {
             </IconButton>
 
             {selectedMedia &&
-              (selectedMedia.includes(".mp4") ? (
+              (selectedMedia.contentType.startsWith("video/") ? (
                 <video
-                  src={selectedMedia}
+                  src={selectedMedia.url}
                   controls
-                  style={{
-                    width: "100%",
-                    maxHeight: "80vh",
-                    objectFit: "contain",
-                  }}
+                  style={{ width: "100%", height: "auto" }}
                 />
               ) : (
                 <img
-                  src={selectedMedia}
+                  src={selectedMedia.url}
                   alt="Selected"
-                  style={{
-                    width: "100%",
-                    maxHeight: "80vh",
-                    objectFit: "contain",
-                  }}
+                  style={{ width: "100%", height: "auto" }}
                 />
               ))}
           </Box>
