@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
 import Link from '@mui/material/Link';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
@@ -11,48 +13,30 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
 const theme = createTheme();
 
-const Index = () => {
+const LoginPage = () => {
   const navigate = useNavigate();
-  const { signUp, isAuthenticated } = useAuth();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/");
-    }
-  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     
-    if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden');
-      return;
-    }
-
-    if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres');
-      return;
-    }
-
     try {
       setError('');
       setLoading(true);
       
-      await signUp(email, password);
+      await signIn(email, password);
       navigate("/");
     } catch (err) {
-      setError(err.message || 'Error al registrarse');
+      setError(err.message || 'Error al iniciar sesión');
     } finally {
       setLoading(false);
     }
@@ -60,7 +44,6 @@ const Index = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <CssBaseline />
       <Container component="main" maxWidth="xs">
         <Box
           sx={{
@@ -74,7 +57,7 @@ const Index = () => {
             <LockOutlinedIcon />
           </Avatar>
           <Typography component="h1" variant="h5">
-            Registrarse
+            Iniciar Sesión
           </Typography>
           
           {error && (
@@ -96,7 +79,6 @@ const Index = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
-              type="email"
             />
             <TextField
               margin="normal"
@@ -106,23 +88,14 @@ const Index = () => {
               label="Contraseña"
               type="password"
               id="password"
-              autoComplete="new-password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
             />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="confirmPassword"
-              label="Confirmar Contraseña"
-              type="password"
-              id="confirmPassword"
-              autoComplete="new-password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={loading}
+            <FormControlLabel
+              control={<Checkbox value="remember" color="primary" />}
+              label="Recordarme"
             />
             <Button
               type="submit"
@@ -131,12 +104,17 @@ const Index = () => {
               sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? <CircularProgress size={24} /> : 'Registrarse'}
+              {loading ? <CircularProgress size={24} /> : 'Iniciar Sesión'}
             </Button>
-            <Grid container justifyContent="center">
+            <Grid container>
+              <Grid item xs>
+                <Link href="#" variant="body2">
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </Grid>
               <Grid item>
-                <Link href="/login" variant="body2">
-                  ¿Ya tienes una cuenta? Inicia sesión
+                <Link href="/signup" variant="body2">
+                  {"¿No tienes una cuenta? Regístrate"}
                 </Link>
               </Grid>
             </Grid>
@@ -147,4 +125,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default LoginPage;

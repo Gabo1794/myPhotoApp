@@ -1,12 +1,9 @@
 import React, { useRef, useState, useEffect } from "react";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { addDoc, collection } from "firebase/firestore";
-import { db, storage, auth } from "../../config/firebase";
 import { Button, Box, IconButton, Snackbar, Alert } from "@mui/material";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import FlipCameraAndroidIcon from "@mui/icons-material/FlipCameraAndroid";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { v4 as uuidv4 } from "uuid";
+import { useMedia } from "../../hooks/useMedia";
 
 const Index = ({ albumId }) => {
   const videoRef = useRef(null);
@@ -15,9 +12,13 @@ const Index = ({ albumId }) => {
   const [cameraActive, setCameraActive] = useState(false);
   const [facingMode, setFacingMode] = useState("environment");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
   const guestInfo = JSON.parse(localStorage.getItem("guestInfo"));
   const guestId = guestInfo?.guestId || null;
+  const guestName = guestInfo?.guestName || "Guest";
+
+  const { upload } = useMedia(albumId);
 
   useEffect(() => {
     let stream;
@@ -68,16 +69,26 @@ const Index = ({ albumId }) => {
   const uploadPhoto = async () => {
     if (!photo) return;
 
-    // Convertir la foto en un blob y subir a Firebase
-    const response = await fetch(photo);
-    const blob = await response.blob();
-    const storageRef = ref(storage, `${albumId}/${guestId}-${uuidv4()}.png`);
-    await uploadBytes(storageRef, blob);
+    try {
+      setUploadError("");
+      // Convertir la foto en un blob
+      const response = await fetch(photo);
+      const blob = await response.blob();
 
-    const url = await getDownloadURL(storageRef);
+      // Crear un File a partir del blob
+      const file = new File([blob], `photo-${Date.now()}.png`, {
+        type: "image/png",
+      });
 
-    setPhoto(null);
-    setSnackbarOpen(true);
+      // Subir usando el hook useMedia
+      await upload(file, guestId, guestName);
+
+      setPhoto(null);
+      setSnackbarOpen(true);
+    } catch (err) {
+      console.error("Error al subir la foto:", err);
+      setUploadError("Error al subir la foto");
+    }
   };
 
   const toggleCamera = () => {
@@ -185,14 +196,20 @@ const Index = ({ albumId }) => {
 
       <Snackbar
         open={snackbarOpen}
-        autoHideDuration={4000} // 4 segundos
+        autoHideDuration={4000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: '100%' }}>
           Foto subida con éxito!
         </Alert>
-      </Snackbar>      
+      </Snackbar>
+
+      {uploadError && (
+        <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
+          {uploadError}
+        </Alert>
+      )}      
     </Box>
   );
 };

@@ -12,33 +12,26 @@ import {
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { Link, useParams } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../../../config/firebase";
 import ModalUserInvited from "../../UserInvited/Index";
+import { useAlbums } from "../../../hooks/useAlbums";
 
 const Index = () => {
   const theme = useTheme();
   const { aid } = useParams();
 
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // Check if the viewport width is small
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [anchorEl, setAnchorEl] = useState(null);
   const [eventName, setEventName] = useState("");
+
+  const { getById } = useAlbums();
 
   useEffect(() => {
     const fetchAlbum = async () => {
       try {
-        // Referenciar el documento en la colección 'albums'
-        const albumRef = doc(db, "albums", aid);
-
-        // Obtener el documento
-        const albumSnap = await getDoc(albumRef);
-
-        if (albumSnap.exists()) {
-          // El documento fue encontrado, puedes acceder a sus datos
-          const albumData = albumSnap.data();
-          setEventName(albumData.title);
+        const albumData = await getById(aid);
+        if (albumData) {
+          setEventName(albumData.name);
         } else {
-          // El documento no existe
           console.log("No existe un álbum con ese ID");
           setEventName(null);
         }
@@ -47,8 +40,10 @@ const Index = () => {
         setEventName(null);
       }
     };
-    fetchAlbum();
-  }, [eventName]);
+    if (aid) {
+      fetchAlbum();
+    }
+  }, [aid, getById]);
 
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);

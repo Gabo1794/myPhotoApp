@@ -4,18 +4,12 @@ import {
   IconButton,
   Button,
   Box,
+  Container,
+  CircularProgress,
+  Alert,
+  Paper,
 } from "@mui/material";
 import UploadIcon from "@mui/icons-material/Upload";
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  listAll,
-  deleteObject,
-  getMetadata
-} from "firebase/storage";
-import { storage } from "../../config/firebase";
-import { v4 as uuidv4 } from "uuid";
 import {
   CameraAltRounded,
   FlipCameraIosRounded,
@@ -23,53 +17,47 @@ import {
 } from "@mui/icons-material";
 import Webcam from "react-webcam";
 import Gallery from "../Gallery/Index";
+import { useMedia } from "../../hooks/useMedia";
 
-const MAX_IMAGES = 20;
+const MAX_IMAGES = 100;
 
 const Index = ({ albumId }) => {
   const [images, setImages] = useState([]);
-  const [imageUpload, setImageUpload] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [showWebcam, setShowWebcam] = useState(false);
   const [cameraType, setCameraType] = useState("environment");
   const webcamRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const guestInfo = JSON.parse(localStorage.getItem("guestInfo"));
   const guestId = guestInfo?.guestId || null;
+  const guestName = guestInfo?.guestName || 'Invitado';
+
+  const { listByAlbum, upload } = useMedia(albumId);
 
   useEffect(() => {
     const fetchImages = async () => {
-      setLoading(true);
-      const imagesRef = ref(storage, `${albumId}/`);
-      const imageList = await listAll(imagesRef);
-  
-      const mediaData = await Promise.all(
-        imageList.items
-          .filter((item) => item.name.includes(guestId))
-          .map(async (item) => {
-            const url = await getDownloadURL(item);
-            const metadata = await getMetadata(item);
-            return {
-              url,
-              contentType: metadata.contentType,
-            };
-          })
-      );
-  
-      setImages(mediaData);
-      setLoading(false);
+      try {
+        setLoading(true);
+        setError('');
+        const mediaList = await listByAlbum();
+        // Filtrar solo las imágenes subidas por este invitado
+        const guestImages = mediaList.filter(m => m.uploaded_by_id === guestId);
+        setImages(guestImages);
+      } catch (err) {
+        setError('Error al cargar las imágenes');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     };
-  
-    if (guestId) {
+
+    if (guestId && albumId) {
       fetchImages();
     }
-  }, [albumId, guestId]);  
-
-  useEffect(() => {
-    if (imageUpload) {
-      handleImageUpload();
-    }
-  }, [imageUpload]);
+  }, [guestId, albumId]);
 
   useEffect(() => {
     if (showWebcam) {
@@ -82,188 +70,217 @@ const Index = ({ albumId }) => {
     };
   }, [showWebcam]);
 
-  const handleImageUpload = async () => {
-    if (imageUpload == null || images.length >= MAX_IMAGES) return;
+  const handleFileUpload = async (file) => {
+    if (!file || !guestId) return;
+    if (images.length >= MAX_IMAGES) {
+      setError(`Límite máximo de ${MAX_IMAGES} imágenes alcanzado`);
+      return;
+    }
 
-    const imageRef = ref(storage, `${albumId}/${guestId}-${uuidv4()}`);
-    await uploadBytes(imageRef, imageUpload);
-    const url = await getDownloadURL(imageRef);
-    const metadata = await getMetadata(imageRef);
-
-    setImages((prev) => [...prev, { url, contentType: metadata.contentType }]);
-    setImageUpload(null);
+    try {
+      setError('');
+      const uploadedMedia = await upload(file, guestId, guestName);
+      setImages(prev => [...prev, uploadedMedia]);
+    } catch (err) {
+      setError('Error al subir la imagen: ' + (err.message || 'Intenta de nuevo'));
+      console.error(err);
+    }
   };
 
-  const handleDeleteImage = async (imageUrl) => {
-    const decodeUrl = decodeURIComponent(
-      imageUrl.split("/").pop().split("?")[0]
-    );
-    const imageRef = ref(storage, `${decodeUrl}`);
-
-    await deleteObject(imageRef);
-    setImages((prev) => prev.filter((media) => media.url !== imageUrl));
+  const handleInputChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
   };
 
-  const captureImage = () => {
+  const captureImage = async () => {
+    if (!webcamRef.current) return;
+    
     const imageSrc = webcamRef.current.getScreenshot();
-    setImageUpload(dataURLtoFile(imageSrc, "captured.jpg"));
+    const blob = await (await fetch(imageSrc)).blob();
+    const file = new File([blob], `captured-${Date.now()}.jpg`, { type: 'image/jpeg' });
+    
+    await handleFileUpload(file);
     setShowWebcam(false);
   };
 
-  const dataURLtoFile = (dataUrl, filename) => {
-    const arr = dataUrl.split(",");
-    const mime = arr[0].match(/:(.*?);/)[1];
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while (n--) {
-      u8arr[n] = bstr.charCodeAt(n);
-    }
-    return new File([u8arr], filename, { type: mime });
+  const toggleCamera = () => {
+    setCameraType(prev => (prev === "environment" ? "user" : "environment"));
   };
 
-  const toggleCamera = () => {
-    setCameraType((prev) => (prev === "environment" ? "user" : "environment"));
+  const handleDeleteImage = async (mediaId) => {
+    try {
+      const deleteMedia = useMedia(albumId).delete;
+      await deleteMedia(mediaId);
+      setImages(prev => prev.filter(img => img.id !== mediaId));
+    } catch (err) {
+      setError('Error al eliminar la imagen');
+      console.error(err);
+    }
   };
 
   return (
-    <Box sx={{ flexGrow: 1, p: 2 }}>
-      <Typography variant="h4" sx={{ mb: 2 }}>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Typography variant="h4" gutterBottom>
         Mis Fotos ({images.length}/{MAX_IMAGES})
       </Typography>
+      
+      <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+        Subidas por: {guestName}
+      </Typography>
 
-      {images.length >= MAX_IMAGES && (
-        <Typography color="error" sx={{ mt: 2 }}>
-          Has alcanzado el límite máximo de fotos (20).
-        </Typography>
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
+          {error}
+        </Alert>
       )}
 
-      <Box sx={{ mt: 4, textAlign: "center", mb: 4 }}>
-        <Button
-          variant="contained"
-          component="label"
-          startIcon={<UploadIcon />}
-          disabled={images.length >= MAX_IMAGES}
-          size="small"
-          style={{ marginRight: 10 }}
+      {images.length >= MAX_IMAGES && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Has alcanzado el límite máximo de fotos ({MAX_IMAGES}).
+        </Alert>
+      )}
+
+      {/* Botones de acción */}
+      <Paper sx={{ p: 2, mb: 4, backgroundColor: '#f5f5f5' }}>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Button
+            variant="contained"
+            startIcon={<UploadIcon />}
+            disabled={images.length >= MAX_IMAGES}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Subir Foto
+          </Button>
+
+          <Button
+            variant="contained"
+            startIcon={<CameraAltRounded />}
+            disabled={images.length >= MAX_IMAGES}
+            onClick={() => setShowWebcam(true)}
+            color="secondary"
+          >
+            Usar Cámara
+          </Button>
+        </Box>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          hidden
+          accept="image/*,video/*"
+          onChange={handleInputChange}
+        />
+      </Paper>
+
+      {/* Modal de Webcam */}
+      {showWebcam && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0, 0, 0, 0.95)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
         >
-          Subir Foto
-          <input
-            type="file"
-            hidden
-            accept="image/*,video/*"
-            onChange={(e) => setImageUpload(e.target.files[0])}
+          <Webcam
+            audio={false}
+            ref={webcamRef}
+            screenshotFormat="image/jpeg"
+            videoConstraints={{ facingMode: cameraType }}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+            }}
           />
-        </Button>
 
-        <Button
-          variant="contained"
-          startIcon={<CameraAltRounded />}
-          disabled={images.length >= MAX_IMAGES}
-          size="small"
-          onClick={() => setShowWebcam(true)}
-          style={{ marginLeft: 10 }}
-        >
-          Usar cámara
-        </Button>
-
-        {showWebcam && (
+          {/* Botones en la parte inferior */}
           <Box
             sx={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              width: "100vw",
-              height: "100vh",
-              backgroundColor: "rgba(0, 0, 0, 0.8)",
+              position: "absolute",
+              bottom: 40,
+              width: "100%",
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              zIndex: 1000,
+              gap: 2,
             }}
           >
-            <Webcam
-              audio={false}
-              ref={webcamRef}
-              screenshotFormat="image/jpeg"
-              videoConstraints={{ facingMode: cameraType }}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-
-            <Box
+            <IconButton
+              onClick={captureImage}
               sx={{
-                position: "absolute",
-                bottom: 40,
-                width: "100%",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
+                width: 70,
+                height: 70,
+                backgroundColor: "white",
+                border: "4px solid rgba(255, 255, 255, 0.8)",
+                borderRadius: "50%",
+                "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.9)" },
               }}
             >
-              <IconButton
-                onClick={captureImage}
+              <Box
                 sx={{
-                  width: 70,
-                  height: 70,
+                  width: 50,
+                  height: 50,
                   backgroundColor: "white",
-                  border: "4px solid rgba(255, 255, 255, 0.8)",
                   borderRadius: "50%",
-                  position: "relative",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.9)" },
+                  border: "3px solid rgba(0, 0, 0, 0.2)",
                 }}
-              >
-                <Box
-                  sx={{
-                    width: 50,
-                    height: 50,
-                    backgroundColor: "white",
-                    borderRadius: "50%",
-                    border: "3px solid rgba(0, 0, 0, 0.1)",
-                  }}
-                />
-              </IconButton>
-            </Box>
-
-            <IconButton
-              onClick={toggleCamera}
-              sx={{
-                position: "absolute",
-                top: 20,
-                right: 20,
-                color: "white",
-                backgroundColor: "rgba(0,0,0,0.5)",
-                "&:hover": { backgroundColor: "rgba(0,0,0,0.7)" },
-              }}
-            >
-              <FlipCameraIosRounded />
-            </IconButton>
-
-            <IconButton
-              onClick={() => setShowWebcam(false)}
-              sx={{
-                position: "absolute",
-                top: 20,
-                left: 20,
-                color: "white",
-                backgroundColor: "rgba(0, 0, 0, 0.5)",
-                "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.7)" },
-              }}
-            >
-              <Close />
+              />
             </IconButton>
           </Box>
-        )}
-      </Box>
 
-      <Gallery 
-        images={images} 
-        handleDeleteImage={handleDeleteImage} 
-      />
+          {/* Botón cambiar cámara */}
+          <IconButton
+            onClick={toggleCamera}
+            sx={{
+              position: "absolute",
+              top: 20,
+              right: 20,
+              color: "white",
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+              "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.7)" },
+            }}
+          >
+            <FlipCameraIosRounded />
+          </IconButton>
 
-    </Box>
+          {/* Botón cerrar */}
+          <IconButton
+            onClick={() => setShowWebcam(false)}
+            sx={{
+              position: "absolute",
+              top: 20,
+              left: 20,
+              color: "white",
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+              "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.7)" },
+            }}
+          >
+            <Close />
+          </IconButton>
+        </Box>
+      )}
+
+      {/* Galería de imágenes */}
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <Gallery
+          images={images}
+          handleDeleteImage={handleDeleteImage}
+        />
+      )}
+    </Container>
   );
 };
 
