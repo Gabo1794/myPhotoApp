@@ -34,6 +34,7 @@ export function useAlbums(userId?: string) {
   const getById = async (albumId: string) => {
     try {
       setError(null);
+      // Para rutas públicas, no requiere autenticación
       return await services.album.getById(albumId);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch album'));

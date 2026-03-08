@@ -5,7 +5,7 @@ import TextField from '@mui/material/TextField';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import Link from '@mui/material/Link';
-import Grid from '@mui/material/Grid';
+import Grid2 from '@mui/material/Grid2';
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -114,18 +114,18 @@ const Index = () => {
             >
               {loading ? <CircularProgress size={24} /> : 'Iniciar Sesión'}
             </Button>
-            <Grid container>
-              <Grid item xs>
+            <Grid2 container spacing={1}>
+              <Grid2 xs>
                 <Link href="#" variant="body2">
                   ¿Olvidaste tu contraseña?
                 </Link>
-              </Grid>
-              <Grid item>
+              </Grid2>
+              <Grid2>
                 <Link href="/signup" variant="body2">
                   {"¿No tienes una cuenta? Regístrate"}
                 </Link>
-              </Grid>
-            </Grid>
+              </Grid2>
+            </Grid2>
           </Box>
         </Box>
       </Container>

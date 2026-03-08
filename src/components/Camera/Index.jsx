@@ -15,7 +15,6 @@ const Index = ({ albumId }) => {
   const [uploadError, setUploadError] = useState("");
 
   const guestInfo = JSON.parse(localStorage.getItem("guestInfo"));
-  const guestId = guestInfo?.guestId || null;
   const guestName = guestInfo?.guestName || "Guest";
 
   const { upload } = useMedia(albumId);
@@ -80,8 +79,8 @@ const Index = ({ albumId }) => {
         type: "image/png",
       });
 
-      // Subir usando el hook useMedia
-      await upload(file, guestId, guestName);
+      // Subir usando el hook useMedia (auth.uid() se obtiene automáticamente en SupabaseMediaService)
+      await upload(file, guestName);
 
       setPhoto(null);
       setSnackbarOpen(true);

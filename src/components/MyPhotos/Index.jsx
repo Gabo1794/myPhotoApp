@@ -17,6 +17,7 @@ import {
 } from "@mui/icons-material";
 import Webcam from "react-webcam";
 import Gallery from "../Gallery/Index";
+import ModalUserInvited from "../UserInvited/Index";
 import { useMedia } from "../../hooks/useMedia";
 
 const MAX_IMAGES = 100;
@@ -32,7 +33,6 @@ const Index = ({ albumId }) => {
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const guestInfo = JSON.parse(localStorage.getItem("guestInfo"));
-  const guestId = guestInfo?.guestId || null;
   const guestName = guestInfo?.guestName || 'Invitado';
 
   const { listByAlbum, upload } = useMedia(albumId);
@@ -42,10 +42,9 @@ const Index = ({ albumId }) => {
       try {
         setLoading(true);
         setError('');
-        const mediaList = await listByAlbum();
-        // Filtrar solo las imágenes subidas por este invitado
-        const guestImages = mediaList.filter(m => m.uploaded_by_id === guestId);
-        setImages(guestImages);
+        const mediaList = await listByAlbum(albumId);
+        // Show all images (auth.uid() filtering is done server-side now)
+        setImages(mediaList);
       } catch (err) {
         setError('Error al cargar las imágenes');
         console.error(err);
@@ -54,10 +53,10 @@ const Index = ({ albumId }) => {
       }
     };
 
-    if (guestId && albumId) {
+    if (albumId) {
       fetchImages();
     }
-  }, [guestId, albumId]);
+  }, [albumId]);
 
   useEffect(() => {
     if (showWebcam) {
@@ -71,7 +70,7 @@ const Index = ({ albumId }) => {
   }, [showWebcam]);
 
   const handleFileUpload = async (file) => {
-    if (!file || !guestId) return;
+    if (!file) return;
     if (images.length >= MAX_IMAGES) {
       setError(`Límite máximo de ${MAX_IMAGES} imágenes alcanzado`);
       return;
@@ -79,7 +78,7 @@ const Index = ({ albumId }) => {
 
     try {
       setError('');
-      const uploadedMedia = await upload(file, guestId, guestName);
+      const uploadedMedia = await upload(file, guestName);
       setImages(prev => [...prev, uploadedMedia]);
     } catch (err) {
       setError('Error al subir la imagen: ' + (err.message || 'Intenta de nuevo'));
@@ -122,6 +121,8 @@ const Index = ({ albumId }) => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
+      <ModalUserInvited albumId={albumId} />
+      
       <Typography variant="h4" gutterBottom>
         Mis Fotos ({images.length}/{MAX_IMAGES})
       </Typography>

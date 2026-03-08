@@ -3,7 +3,7 @@ import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Link from '@mui/material/Link';
-import Grid from '@mui/material/Grid';
+import Grid2 from '@mui/material/Grid2';
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -133,13 +133,13 @@ const Index = () => {
             >
               {loading ? <CircularProgress size={24} /> : 'Registrarse'}
             </Button>
-            <Grid container justifyContent="center">
-              <Grid item>
+            <Grid2 container justifyContent="center">
+              <Grid2>
                 <Link href="/login" variant="body2">
                   ¿Ya tienes una cuenta? Inicia sesión
                 </Link>
-              </Grid>
-            </Grid>
+              </Grid2>
+            </Grid2>
           </Box>
         </Box>
       </Container>

@@ -80,6 +80,5 @@ export interface CreateUserInput {
 
 export interface UploadMediaInput {
   file: File;
-  guestId?: string;
-  guestName?: string;
+  uploaded_by_name?: string;  // Guest or user name
 }

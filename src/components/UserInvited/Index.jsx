@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Box, Typography, TextField, Button, Alert } from '@mui/material';
-import { v4 as uuidv4 } from 'uuid';
 
 // Estilos para el modal
 const modalStyle = {
@@ -25,8 +24,8 @@ const Index = ({ albumId }) => {
     // Obtener el objeto completo del localStorage
     const guestInfo = JSON.parse(localStorage.getItem('guestInfo'));
 
-    // Si no existe el objeto de invitado, mostramos el modal
-    if (!guestInfo || !guestInfo.guestId || !guestInfo.guestName) {
+    // Si no existe información de invitado, mostramos el modal
+    if (!guestInfo || !guestInfo.guestName) {
       setOpenModal(true);
     }
   }, []);
@@ -40,13 +39,10 @@ const Index = ({ albumId }) => {
 
     try {
       setError('');
-      
-      // Generar un ID único para el invitado
-      const guestId = uuidv4();
 
-      // Crear un objeto con guestId y guestName
+      // Crear un objeto solo con guestName y createdAt
+      // El auth.uid() se obtiene automáticamente en SupabaseMediaService
       const guestInfo = {
-        guestId: guestId,
         guestName: guestName,
         createdAt: new Date().toISOString(),
       };

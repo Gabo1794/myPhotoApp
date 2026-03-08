@@ -8,12 +8,11 @@ import Signup from "./pages/Signup/Index";
 import Album from "./pages/Album/Index";
 import MyPhotos from "./pages/MyPhotos/Index";
 import PublicAlbum from "./pages/PublicViews/Album/Index";
-// import PublicMyPhotos from "./pages/PublicViews/MyPhotos/Index";
 import Camera from "./pages/PublicViews/Camera/Index";
-// import MyPhotos from "./components/MyPhotos/Index";
-// import Camera from "./components/Camera/Index";
 import Navbar from "./components/Navbar/Index";
 import PubNabar from "./components/Navbar/SharedNavbar/Index";
+import { useAnonymousAuth } from "./hooks/useAnonymousAuth";
+import { Box, CircularProgress } from "@mui/material";
 
 
 const AppLayout = () => (
@@ -29,6 +28,23 @@ const PublicAppLayout = () => (
     <Outlet />  
   </>
 );
+
+// Wrapper para rutas públicas que requieren autenticación anónima
+const PublicRoutesWrapper = () => {
+  const { loading } = useAnonymousAuth();
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  return (
+    <PublicAppLayout />
+  );
+};
 
 
 function App() {
@@ -47,7 +63,7 @@ function App() {
         </Route>
         
         {/* Rutas públicas de invitados */}
-        <Route element={<PublicAppLayout />}>
+        <Route element={<PublicRoutesWrapper />}>
           <Route path="/album/event/:aid" element={<PublicAlbum />} /> 
           <Route path="/my-photos/event/:aid" element={<MyPhotos />} />
           <Route path="/camera/:aid" element={<Camera />} />

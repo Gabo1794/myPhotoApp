@@ -62,13 +62,17 @@ export class SupabaseMediaService implements IMediaService {
       throw new Error('Album storage limit exceeded');
     }
 
+    // Get current user ID from auth session (for RLS tracking)
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) throw new Error('User authentication required');
+    const currentUserId = user.id;
+
     // Count uploads by user
-    const uploader_id = input.guestId || userId;
     const { count, error: countError } = await supabase
       .from('media_files')
       .select('*', { count: 'exact' })
       .eq('album_id', albumId)
-      .eq('uploaded_by_id', uploader_id);
+      .eq('uploaded_by_id', currentUserId);
 
     if (!countError && count && count >= album.max_files_per_user) {
       throw new Error('User upload limit exceeded for this album');
@@ -102,15 +106,15 @@ export class SupabaseMediaService implements IMediaService {
       fileType = 'video';
     }
 
-    // Insert media record
+    // Insert media record with auth.uid() for RLS compliance
     const { data: mediaData, error: insertError } = await supabase
       .from('media_files')
       .insert({
         id: mediaId,
         album_id: albumId,
         owner_id: album.owner_id,
-        uploaded_by_id: uploader_id,
-        uploaded_by_name: input.guestName,
+        uploaded_by_id: currentUserId,  // Use auth.uid() for RLS tracking
+        uploaded_by_name: input.uploaded_by_name,  // Guest name from input
         file_url: fileUrl,
         file_type: fileType,
         file_size_mb: fileSizeMb,

@@ -16,8 +16,10 @@ export function useMedia(albumId?: string) {
       setLoading(true);
       const data = await services.media.listByAlbum(id);
       setMedia(data);
+      return data;
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch media'));
+      return [];
     } finally {
       setLoading(false);
     }
@@ -35,8 +37,8 @@ export function useMedia(albumId?: string) {
 
   const upload = async (
     fileOrId: any,
-    inputOrUserId?: any,
-    userIdOrGuestName?: any
+    inputOrUploadedName?: any,
+    userIdOrUnused?: any
   ) => {
     try {
       setError(null);
@@ -47,21 +49,20 @@ export function useMedia(albumId?: string) {
       let input: UploadMediaInput;
       let userId: string | undefined;
 
-      // Caso 1: upload(file, guestId, guestName) - cuando albumId ya está definido
+      // Caso 1: upload(file, uploadedByName) - cuando albumId ya está definido
       if (albumId && fileOrId instanceof File) {
         id = albumId;
         input = {
           file: fileOrId,
-          uploaded_by_id: inputOrUserId,
-          uploaded_by_name: userIdOrGuestName,
+          uploaded_by_name: inputOrUploadedName,
         };
         userId = undefined;
       }
       // Caso 2: upload(id, input, userId) - para compatibilidad
       else {
         id = fileOrId;
-        input = inputOrUserId;
-        userId = userIdOrGuestName;
+        input = inputOrUploadedName;
+        userId = userIdOrUnused;
       }
 
       const mediaFile = await services.media.upload(id, input, userId);

@@ -11,39 +11,20 @@ import {
   useTheme,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useLocation } from "react-router-dom";
 import ModalUserInvited from "../../UserInvited/Index";
-import { useAlbums } from "../../../hooks/useAlbums";
 
 const Index = () => {
   const theme = useTheme();
   const { aid } = useParams();
+  const location = useLocation();
 
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [anchorEl, setAnchorEl] = useState(null);
   const [eventName, setEventName] = useState("");
 
-  const { getById } = useAlbums();
-
-  useEffect(() => {
-    const fetchAlbum = async () => {
-      try {
-        const albumData = await getById(aid);
-        if (albumData) {
-          setEventName(albumData.name);
-        } else {
-          console.log("No existe un álbum con ese ID");
-          setEventName(null);
-        }
-      } catch (error) {
-        console.error("Error al obtener el álbum:", error);
-        setEventName(null);
-      }
-    };
-    if (aid) {
-      fetchAlbum();
-    }
-  }, [aid, getById]);
+  // No usar hooks que requieren contexto en rutas de camera
+  const isCamera = location.pathname.includes('/camera');
 
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -87,22 +68,12 @@ const Index = () => {
                 >
                   Mis Fotos
                 </MenuItem>
-                {/* <MenuItem
-                  component={Link}
-                  to={`/camera/${aid}`}
-                  onClick={handleMenuClose}
-                >
-                  Cámara
-                </MenuItem> */}
-                {/* <MenuItem component={Link} to="/logout" onClick={handleMenuClose}>
-                Cerrar Sesión
-              </MenuItem> */}
               </Menu>
             </>
           ) : (
             <>
               <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                {eventName}
+                {eventName || "Evento"}
               </Typography>
               <Button
                 color="inherit"
@@ -118,18 +89,12 @@ const Index = () => {
               >
                 Mis Fotos
               </Button>
-              {/* <Button color="inherit" component={Link} to={`/camera/${aid}`}>
-                Camara
-              </Button> */}
-              {/* <Button color="inherit" component={Link} to="/logout">
-              Cerrar Sesión
-            </Button> */}
             </>
           )}
         </Toolbar>
       </AppBar>
 
-      <ModalUserInvited albumId={aid} />
+      {!isCamera && <ModalUserInvited albumId={aid} />}
     </>
   );
 };

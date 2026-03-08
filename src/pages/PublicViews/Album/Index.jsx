@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import { useParams, useNavigate } from "react-router-dom";
 import Gallery from "../../../components/Gallery/Index";
+import ModalUserInvited from "../../../components/UserInvited/Index";
 import { useAlbums } from "../../../hooks/useAlbums";
 import { useMedia } from "../../../hooks/useMedia";
 
@@ -51,7 +52,7 @@ const Index = () => {
     if (aid) {
       fetchAlbum();
     }
-  }, [aid, getById]);
+  }, [aid]);
 
   // Obtener imágenes del álbum
   useEffect(() => {
@@ -76,7 +77,7 @@ const Index = () => {
     if (album?.id) {
       fetchImages();
     }
-  }, [album?.id, mediaHook]);
+  }, [album?.id]);
 
   if (loading && !album) {
     return (
@@ -104,6 +105,8 @@ const Index = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
+      <ModalUserInvited albumId={aid} />
+      
       <Typography variant="h4" gutterBottom>
         {album.name}
       </Typography>
@@ -118,7 +121,7 @@ const Index = () => {
         <Button
           variant="contained"
           color="primary"
-          onClick={() => navigate(`/album/camera/${aid}`)}
+          onClick={() => navigate(`/camera/${aid}`)}
           sx={{ mr: 2 }}
         >
           Tomar Foto

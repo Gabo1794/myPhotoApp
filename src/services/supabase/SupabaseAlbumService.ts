@@ -34,17 +34,22 @@ export class SupabaseAlbumService implements IAlbumService {
   }
 
   async getById(albumId: string): Promise<EventAlbum | null> {
-    const { data, error } = await supabase
-      .from('event_albums')
-      .select('*, album_stats(*)')
-      .eq('id', albumId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('event_albums')
+        .select('*, album_stats(*)')
+        .eq('id', albumId)
+        .maybeSingle();
 
-    if (error) return null;
-    return {
-      ...data,
-      stats: data.album_stats?.[0] || undefined
-    };
+      if (error || !data) return null;
+      return {
+        ...data,
+        stats: data.album_stats?.[0] || undefined
+      };
+    } catch (err) {
+      console.error('Error fetching album by ID:', err);
+      return null;
+    }
   }
 
   async create(userId: string, input: CreateAlbumInput): Promise<EventAlbum> {
