@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  Grid2 as Grid,
+  Grid2,
   Card,
   CardMedia,
   CardContent,
@@ -30,14 +30,14 @@ const Index = ({ images, handleDeleteImage }) => {
 
   return (
     <>
-      <Grid container spacing={2} justifyContent="center">
+      <Grid2 container spacing={2} justifyContent="center">
         {images.map((media, index) => (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
+          <Grid2 key={index} xs={12} sm={6} md={4} lg={3}>
             <Card>
-              {media.contentType.startsWith("video/") ? (
+              {media.file_type === "video" ? (
                 <Box
                   component="video"
-                  src={media.url}
+                  src={media.file_url}
                   controls
                   preload="auto"
                   playsInline
@@ -55,7 +55,7 @@ const Index = ({ images, handleDeleteImage }) => {
                   component="img"
                   alt={`image-${index}`}
                   height="200"
-                  image={media.url}
+                  image={media.file_url}
                   onClick={() => handleOpen(media)}
                   sx={{ cursor: "pointer", objectFit: "cover" }}
                 />
@@ -75,7 +75,7 @@ const Index = ({ images, handleDeleteImage }) => {
                   </Typography>
                   {handleDeleteImage && (
                   <IconButton
-                    onClick={() => handleDeleteImage(media.url)}
+                    onClick={() => handleDeleteImage(media.id)}
                     aria-label="delete"
                     sx={{ color: "error.main" }}
                   >
@@ -85,9 +85,9 @@ const Index = ({ images, handleDeleteImage }) => {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </Grid2>
         ))}
-      </Grid>
+      </Grid2>
 
       <Modal
         open={open}
@@ -128,15 +128,15 @@ const Index = ({ images, handleDeleteImage }) => {
             </IconButton>
 
             {selectedMedia &&
-              (selectedMedia.contentType.startsWith("video/") ? (
+              (selectedMedia.file_type === "video" ? (
                 <video
-                  src={selectedMedia.url}
+                  src={selectedMedia.file_url}
                   controls
                   style={{ width: "100%", height: "auto" }}
                 />
               ) : (
                 <img
-                  src={selectedMedia.url}
+                  src={selectedMedia.file_url}
                   alt="Selected"
                   style={{ width: "100%", height: "auto" }}
                 />

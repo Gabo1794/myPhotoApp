@@ -1,13 +1,9 @@
-import { auth } from "../../config/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+// DEPRECATED: Este archivo está siendo reemplazado por Supabase
+// Mirar: src/services/supabase/SupabaseAuthService.ts
 
 export const SignInWithEmailAndPassword = async (username, password) => {
-    return new Promise(async (resolve, reject) => {
-        try
-        {
-            let response = await signInWithEmailAndPassword(
-                auth,
-                username,
+    throw new Error('Use Supabase auth service instead');
+};
                 password
             );
             resolve(response);

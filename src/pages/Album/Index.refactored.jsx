@@ -6,7 +6,7 @@ import AlbumTable from '../../components/Album/AlbumTable';
 import AlbumForm from '../../components/Album/AlbumForm';
 import AlbumView from '../../components/Album/AlbumView';
 
-const Index = () => {
+const AlbumPage = () => {
   const { user, loading: authLoading } = useAuth();
   const { albums, loading, error, listForOwner, create, update, delete: deleteAlbum } = useAlbums(user?.id);
   
@@ -72,6 +72,14 @@ const Index = () => {
     );
   }
 
+  if (!user) {
+    return (
+      <Container>
+        <Alert severity="error">Debes iniciar sesión</Alert>
+      </Container>
+    );
+  }
+
   return (
     <Container>
       <Typography variant="h3" gutterBottom>
@@ -124,6 +132,4 @@ const Index = () => {
   );
 };
 
-//http://localhost:5173/album/event/qi2X6U8LCr6Gt3nBM4Qj
-
-export default Index;
+export default AlbumPage;
