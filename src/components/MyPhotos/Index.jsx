@@ -19,6 +19,7 @@ import Webcam from "react-webcam";
 import Gallery from "../Gallery/Index";
 import ModalUserInvited from "../UserInvited/Index";
 import { useMedia } from "../../hooks/useMedia";
+import supabase from "../../config/supabase";
 
 const MAX_IMAGES = 100;
 
@@ -35,15 +36,25 @@ const Index = ({ albumId }) => {
   const guestInfo = JSON.parse(localStorage.getItem("guestInfo"));
   const guestName = guestInfo?.guestName || 'Invitado';
 
-  const { listByAlbum, upload } = useMedia(albumId);
+  const { listByAlbumAndUser, upload } = useMedia(albumId);
 
   useEffect(() => {
     const fetchImages = async () => {
       try {
         setLoading(true);
         setError('');
-        const mediaList = await listByAlbum(albumId);
-        // Show all images (auth.uid() filtering is done server-side now)
+        
+        // Obtener el usuario actual
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError || !user) {
+          setError('Error al obtener información del usuario');
+          setImages([]);
+          return;
+        }
+        
+        // Obtener todas las imágenes del álbum
+        const mediaList = await listByAlbumAndUser(albumId, user.id);        
         setImages(mediaList);
       } catch (err) {
         setError('Error al cargar las imágenes');

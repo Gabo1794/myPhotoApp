@@ -25,6 +25,21 @@ export function useMedia(albumId?: string) {
     }
   };
 
+  const listByAlbumAndUser = async (id: string, userId: string) => {
+    try {
+      setError(null);
+      setLoading(true);
+      const data = await services.media.listByAlbumAndUser(id, userId);
+      setMedia(data);
+      return data;
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch media'));
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getStats = async (id: string) => {
     try {
       setError(null);
@@ -98,6 +113,7 @@ export function useMedia(albumId?: string) {
     uploading,
     error,
     listByAlbum,
+    listByAlbumAndUser,
     getStats,
     upload,
     deleteMedia,

@@ -14,6 +14,18 @@ export class SupabaseMediaService implements IMediaService {
     return data || [];
   }
 
+  async listByAlbumAndUser(albumId: string, userId: string) : Promise<MediaFile[]> {
+    const { data, error } = await supabase
+      .from('media_files')
+      .select('*')
+      .eq('album_id', albumId)
+      .eq('uploaded_by_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];    
+  }
+
   async getById(mediaId: string): Promise<MediaFile | null> {
     const { data, error } = await supabase
       .from('media_files')
