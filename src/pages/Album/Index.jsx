@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, Button, CircularProgress, Alert } from '@mui/material';
+import { Container, Typography, Button, CircularProgress, Alert, Snackbar } from '@mui/material';
 import { useAuth } from '../../hooks/useAuth';
 import { useAlbums } from '../../hooks/useAlbums';
 import AlbumTable from '../../components/Album/AlbumTable';
@@ -14,6 +14,8 @@ const Index = () => {
   const [viewingAlbum, setViewingAlbum] = useState(null);
   const [isFormVisible, setFormVisible] = useState(false);
   const [localError, setLocalError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -33,13 +35,17 @@ const Index = () => {
   const handleSave = async (albumData) => {
     try {
       setLocalError('');
+      setSuccessMessage('');
       if (currentAlbum) {
         await update(currentAlbum.id, albumData);
+        setSuccessMessage('Álbum actualizado con éxito');
       } else {
         await create(albumData);
+        setSuccessMessage('Álbum creado con éxito');
       }
       setFormVisible(false);
       setCurrentAlbum(null);
+      setSnackbarOpen(true);
     } catch (err) {
       setLocalError(err.message || 'Error al guardar el álbum');
     }
@@ -49,6 +55,7 @@ const Index = () => {
     setFormVisible(false);
     setCurrentAlbum(null);
     setLocalError('');
+    setSuccessMessage('');
   };
 
   const handleBack = () => {
@@ -58,10 +65,17 @@ const Index = () => {
   const handleDelete = async (albumId) => {
     try {
       setLocalError('');
+      setSuccessMessage('');
       await deleteAlbum(albumId);
+      setSuccessMessage('Álbum eliminado con éxito');
+      setSnackbarOpen(true);
     } catch (err) {
       setLocalError(err.message || 'Error al eliminar el álbum');
     }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
   };
 
   if (authLoading) {
@@ -78,6 +92,12 @@ const Index = () => {
         Gestor de Álbumes
       </Typography>
 
+      {successMessage && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          {successMessage}
+        </Alert>
+      )}
+
       {(error || localError) && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error?.message || localError}
@@ -90,6 +110,7 @@ const Index = () => {
           onSave={handleSave} 
           onCancel={handleCancel}
           loading={loading}
+          error={localError}
         />
       ) : viewingAlbum ? (
         <AlbumView 
@@ -120,6 +141,17 @@ const Index = () => {
           )}
         </>
       )}
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: '100%' }}>
+          {successMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

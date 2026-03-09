@@ -62,18 +62,19 @@ export function useAlbums(userId?: string) {
   const update = async (albumId: string, input: CreateAlbumInput) => {
     try {
       setError(null);
+      setLoading(true);
       if (!userId) throw new Error('User ID required');
+      
+      // Llamar al servicio para actualizar
       await services.album.update(albumId, userId, input);
-      setAlbums(
-        albums.map((a) =>
-          a.id === albumId
-            ? { ...a, name: input.name, is_active: input.is_active ?? a.is_active }
-            : a
-        )
-      );
+      
+      // Refrescar la lista completa desde la BD para asegurar sincronización
+      await listForOwner(userId);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to update album'));
       throw err;
+    } finally {
+      setLoading(false);
     }
   };
 

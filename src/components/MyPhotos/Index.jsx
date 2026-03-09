@@ -29,6 +29,7 @@ const Index = ({ albumId }) => {
   const [error, setError] = useState('');
   const [showWebcam, setShowWebcam] = useState(false);
   const [cameraType, setCameraType] = useState("environment");
+  const [currentUserId, setCurrentUserId] = useState(null);
   const webcamRef = useRef(null);
   const fileInputRef = useRef(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -36,7 +37,7 @@ const Index = ({ albumId }) => {
   const guestInfo = JSON.parse(localStorage.getItem("guestInfo"));
   const guestName = guestInfo?.guestName || 'Invitado';
 
-  const { listByAlbumAndUser, upload } = useMedia(albumId);
+  const { listByAlbumAndUser, upload, deleteMedia } = useMedia(albumId);
 
   useEffect(() => {
     const fetchImages = async () => {
@@ -52,6 +53,8 @@ const Index = ({ albumId }) => {
           setImages([]);
           return;
         }
+        
+        setCurrentUserId(user.id);
         
         // Obtener todas las imágenes del álbum
         const mediaList = await listByAlbumAndUser(albumId, user.id);        
@@ -121,8 +124,7 @@ const Index = ({ albumId }) => {
 
   const handleDeleteImage = async (mediaId) => {
     try {
-      const deleteMedia = useMedia(albumId).delete;
-      await deleteMedia(mediaId);
+      await deleteMedia(mediaId, currentUserId);
       setImages(prev => prev.filter(img => img.id !== mediaId));
     } catch (err) {
       setError('Error al eliminar la imagen');

@@ -65,14 +65,8 @@ export class SupabaseMediaService implements IMediaService {
       throw new Error(`File exceeds maximum size of ${album.max_file_size_mb}MB`);
     }
 
-    // Get current stats
-    const stats = await this.getAlbumStats(albumId);
-    if (!stats) throw new Error('Album stats not found');
-
-    // Check total storage limit
-    if (stats.total_storage_mb + fileSizeMb > album.max_total_storage_mb) {
-      throw new Error('Album storage limit exceeded');
-    }
+    // Note: Storage limit validation removed to avoid RLS issues with album_stats
+    // This can be re-implemented later with a different approach
 
     // Get current user ID from auth session (for RLS tracking)
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -136,8 +130,6 @@ export class SupabaseMediaService implements IMediaService {
 
     if (insertError) throw insertError;
 
-    // Update album stats
-    await this.updateStats(albumId);
 
     return mediaData;
   }
@@ -165,41 +157,6 @@ export class SupabaseMediaService implements IMediaService {
 
     if (error) throw error;
 
-    // Update stats
-    await this.updateStats(media.album_id);
   }
 
-  async getAlbumStats(albumId: string): Promise<AlbumStats | null> {
-    const { data, error } = await supabase
-      .from('album_stats')
-      .select('*')
-      .eq('album_id', albumId)
-      .single();
-
-    if (error) return null;
-    return data;
-  }
-
-  async updateStats(albumId: string): Promise<void> {
-    const { data: files, error } = await supabase
-      .from('media_files')
-      .select('*')
-      .eq('album_id', albumId);
-
-    if (error) throw error;
-
-    const stats = {
-      total_photos: files.filter((f: any) => f.file_type === 'photo').length,
-      total_videos: files.filter((f: any) => f.file_type === 'video').length,
-      total_uploads: files.length,
-      total_storage_mb: files.reduce((sum: number, f: any) => sum + f.file_size_mb, 0),
-    };
-
-    const { error: updateError } = await supabase
-      .from('album_stats')
-      .update(stats)
-      .eq('album_id', albumId);
-
-    if (updateError) throw updateError;
-  }
 }
