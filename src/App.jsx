@@ -2,6 +2,8 @@ import React from "react";
 import {Route, Routes, Navigate, Outlet } from 'react-router-dom';
 import { ServiceProvider } from "./context/ServiceContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { ToastProvider } from "./components/Toast";
+import LandingPage from "./pages/Landing/Index";
 import Home from "./pages/Home/Index";
 import Login from "./pages/Login/Index";
 import Signup from "./pages/Signup/Index";
@@ -10,9 +12,8 @@ import MyPhotos from "./pages/MyPhotos/Index";
 import PublicAlbum from "./pages/PublicViews/Album/Index";
 import Camera from "./pages/PublicViews/Camera/Index";
 import Navbar from "./components/Navbar/Index";
-import PubNabar from "./components/Navbar/SharedNavbar/Index";
+import PublicNavbar from "./components/Navbar/PublicNavbar";
 import { useAnonymousAuth } from "./hooks/useAnonymousAuth";
-import { Box, CircularProgress } from "@mui/material";
 
 
 const AppLayout = () => (
@@ -24,20 +25,20 @@ const AppLayout = () => (
 
 const PublicAppLayout = () => (
   <>
-    <PubNabar />
+    <PublicNavbar />
     <Outlet />  
   </>
 );
 
-// Wrapper para rutas públicas que requieren autenticación anónima
+// Wrapper for public routes that require anonymous auth
 const PublicRoutesWrapper = () => {
   const { loading } = useAnonymousAuth();
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-        <CircularProgress />
-      </Box>
+      <div className="flex justify-center items-center min-h-screen bg-surface-light">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-accent border-t-transparent"></div>
+      </div>
     );
   }
 
@@ -49,29 +50,34 @@ const PublicRoutesWrapper = () => {
 
 function App() {
   return (
-    <ServiceProvider>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        
-        {/* Rutas protegidas */}
-        <Route element={<ProtectedRoute />}>
-          <Route element={<AppLayout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/album" element={<Album />} />
+    <ToastProvider>
+      <ServiceProvider>
+        <Routes>
+          {/* Landing/Marketing Pages */}
+          <Route path="/landing" element={<LandingPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          
+          {/* Protected Routes - Authenticated Users */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<AppLayout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/album" element={<Album />} />
+            </Route>
           </Route>
-        </Route>
-        
-        {/* Rutas públicas de invitados */}
-        <Route element={<PublicRoutesWrapper />}>
-          <Route path="/album/event/:aid" element={<PublicAlbum />} /> 
-          <Route path="/my-photos/event/:aid" element={<MyPhotos />} />
-          <Route path="/camera/:aid" element={<Camera />} />
-        </Route>
+          
+          {/* Public Routes - Guest Access */}
+          <Route element={<PublicRoutesWrapper />}>
+            <Route path="/album/event/:aid" element={<PublicAlbum />} /> 
+            <Route path="/my-photos/event/:aid" element={<MyPhotos />} />
+            <Route path="/camera/:aid" element={<Camera />} />
+          </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </ServiceProvider>
+          {/* Fallback - Redirect to home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </ServiceProvider>
+    </ToastProvider>
   );  
 }
 

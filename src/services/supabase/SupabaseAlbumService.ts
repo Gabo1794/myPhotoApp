@@ -7,45 +7,37 @@ export class SupabaseAlbumService implements IAlbumService {
   async listForOwner(userId: string): Promise<EventAlbum[]> {
     const { data, error } = await supabase
       .from('event_albums')
-      .select('*, album_stats(*)')
+      .select('*')
       .eq('owner_id', userId)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return (data || []).map((album: any) => ({
-      ...album,
-      stats: album.album_stats?.[0] || undefined
-    }));
+
+    return data || [];
   }
 
   async getByPublicCode(publicCode: string): Promise<EventAlbum | null> {
     const { data, error } = await supabase
       .from('event_albums')
-      .select('*, album_stats(*)')
+      .select('*')
       .eq('public_code', publicCode)
       .eq('is_active', true)
       .single();
 
     if (error) return null;
-    return {
-      ...data,
-      stats: data.album_stats?.[0] || undefined
-    };
+    return data;
   }
 
   async getById(albumId: string): Promise<EventAlbum | null> {
     try {
       const { data, error } = await supabase
         .from('event_albums')
-        .select('*, album_stats(*)')
+        .select('*')
         .eq('id', albumId)
         .maybeSingle();
 
       if (error || !data) return null;
-      return {
-        ...data,
-        stats: data.album_stats?.[0] || undefined
-      };
+      return data;
     } catch (err) {
       console.error('Error fetching album by ID:', err);
       return null;
@@ -72,15 +64,6 @@ export class SupabaseAlbumService implements IAlbumService {
 
     if (error) throw error;
 
-    // Initialize album_stats
-    await supabase.from('album_stats').insert({
-      album_id: data.id,
-      total_photos: 0,
-      total_videos: 0,
-      total_uploads: 0,
-      total_storage_mb: 0,
-    });
-
     return data;
   }
 
@@ -91,16 +74,19 @@ export class SupabaseAlbumService implements IAlbumService {
       throw new Error('Unauthorized');
     }
 
+    const updateData: any = {};
+    
+    // Only add fields that were explicitly provided
+    if (input.name !== undefined) updateData.name = input.name;
+    if (input.is_active !== undefined) updateData.is_active = input.is_active;
+    if (input.expiration_date !== undefined) updateData.expiration_date = input.expiration_date || null;
+    if (input.max_files_per_user !== undefined) updateData.max_files_per_user = input.max_files_per_user;
+    if (input.max_file_size_mb !== undefined) updateData.max_file_size_mb = input.max_file_size_mb;
+    if (input.max_total_storage_mb !== undefined) updateData.max_total_storage_mb = input.max_total_storage_mb;
+
     const { error } = await supabase
       .from('event_albums')
-      .update({
-        ...(input.name && { name: input.name }),
-        ...(input.is_active !== undefined && { is_active: input.is_active }),
-        ...(input.expiration_date !== undefined && { expiration_date: input.expiration_date }),
-        ...(input.max_files_per_user && { max_files_per_user: input.max_files_per_user }),
-        ...(input.max_file_size_mb && { max_file_size_mb: input.max_file_size_mb }),
-        ...(input.max_total_storage_mb && { max_total_storage_mb: input.max_total_storage_mb }),
-      })
+      .update(updateData)
       .eq('id', albumId);
 
     if (error) throw error;
