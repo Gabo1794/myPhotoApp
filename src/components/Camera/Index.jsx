@@ -86,7 +86,8 @@ const Index = ({ albumId }) => {
       setSnackbarOpen(true);
     } catch (err) {
       console.error("Error al subir la foto:", err);
-      setUploadError("Error al subir la foto");
+      const errorMessage = err instanceof Error ? err.message : 'Error desconocido al subir la foto';
+      setUploadError(`Error al subir la foto: ${errorMessage}`);
     }
   };
 
